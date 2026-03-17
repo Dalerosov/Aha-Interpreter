@@ -1,0 +1,162 @@
+
+SECSTART SBO
+    
+    FUNCTION or(x,y)
+
+        OPERATION x IS NOT x
+        OPERATION y IS NOT y
+
+        VAR result[1]
+
+        OPERATION result IS x AND y
+
+        OPERATION result IS NOT result
+    END result
+
+    FUNCTION xor(a,b)
+        VAR aNot[1]
+        VAR bNot[1]
+        OPERATION aNot IS NOT a
+        OPERATION bNot IS NOT b
+        VAR and1[1]
+        VAR and2[1]
+        OPERATION and1 IS a AND bNot
+        OPERATION and2 IS aNot AND b
+        VAR result[1]
+        USE result IS SBO:or(and1,and2)
+    END result
+
+    FUNCTION add1bit(a,b,c)
+        VAR rog[1]
+        USE rog IS SBO:xor(a,b)
+        VAR sum[1]
+        USE sum IS SBO:xor(c,rog)
+        VAR and1[1]
+        OPERATION and1 IS a AND b
+        VAR carryOut[1]
+        OPERATION carryOut IS rog AND c
+        USE carryOut IS SBO:or(carryOut,and1)
+        VAR twoBits[2]
+        SET twoBits 0 carryOut 0
+        SET twoBits 1 sum 0
+    END twoBits
+
+    FUNCTION ret1
+        VAR one[1] = 1
+    END one
+
+    FUNCTION ret0
+        VAR zero[1] = 0
+    END zero
+    FUNCTION invert_bit(bit)
+        OPERATION bit IS NOT bit
+    END bit
+
+    FUNCTION invert_bit_at(field,bit_index)
+        VAR bit[1]
+        SET bit 0 field bit_index
+        USE bit IS SBO:invert_bit(bit)
+        SET field bit_index bit 0
+    END 
+    
+    FUNCTION setup
+    END
+
+    FUNCTION is_zero(a)
+        VAR result[1] = 0
+        VAR index[8] = 00000000
+        USE result IS SBO:is_zero_step(a,index)
+        OPERATION result IS NOT result
+    END result
+
+    FUNCTION is_zero_step(a,index)
+        VAR result[1]
+        VAR cur_picked[1]
+        VAR one[8] = 00000001
+        VAR index_plus_one[8]
+        VAR is_cur_1[1]
+        USE index_plus_one IS BBM:add8bit(index,one)
+
+        VAR overflow[1]
+        SET is_cur_1 0 a index
+        USE overflow IS SBO:is_overflow(a,index_plus_one)
+        SKIP 5 IF overflow 0 // IF NEXT OVERFLOWS, SKIP
+        SKIP 10 IF is_cur_1 0
+        USE index IS BBM:add8bit(index,one) //
+        USE result IS SBO:is_zero_step(a,index)
+        SKIP 7 IF result 0 
+        
+        SKIP 5 IF is_cur_1 0 // IF CURENT IS 1 CAN RETURN 1
+        
+        
+        ASSIGN result 0
+        SKIP 2 IF one 0
+
+        ASSIGN result 1
+
+
+    END result
+
+    FUNCTION is_overflow(input,index)
+        VAR result[1]
+        VAR skip[1] = 1
+
+        SKIP 4 IF input index
+        SKIP 3 NOT input index //check if didnt run out of indecies
+        ASSIGN result 1 // set 1 as return val if overflow
+        SKIP 2 IF skip 0
+
+        ASSIGN result 0 // set 0 if isnt overflow
+
+    END result
+
+
+    FUNCTION invert_bits(input)
+        VAR index[8] = 00000000
+        VAR result[64]
+        VAR input_copy[64]
+        USE input_copy IS SBO:copy_var(input)
+
+        VAR val[64]
+
+
+        
+        USE result IS SBO:invert_bits_recursion(input_copy,index)
+
+    END result
+
+    FUNCTION invert_bits_recursion(input,index)
+        VAR index_plus_one[8]
+        VAR one[8] = 00000001
+        VAR overflow[1]
+
+        USE index_plus_one IS BBM:add8bit(index,one)
+        USE overflow IS SBO:is_overflow(input,index_plus_one)
+        USE input IS SBO:invert_bit_at(input,index)
+        SKIP 1 IF overflow 0 //Check for overflow for next, if yes, invert last bit and return
+        USE input IS SBO:invert_bits_recursion(input,index_plus_one)
+
+    END input
+
+    FUNCTION copy_var(input)
+        VAR output[64]
+        VAR index[8] = 00000000
+
+        USE output IS copy_var_step(input,index)
+    END output
+
+
+    FUNCTION copy_var_step(input,index)
+        VAR index_plus_one[8]
+        VAR output[64]
+        VAR one[8] = 00000001
+        USE index_plus_one IS add8bit(index,one)
+        VAR next_overflow[1]
+        USE next_overflow IS SBO:is_overflow(input,index_plus_one)
+        
+        SKIP 1 IF next_overflow 0
+        USE output IS SBO:copy_var_step(input,index_plus_one)
+        SET output index input index
+    END output
+
+SECEND SBO

@@ -1,0 +1,14 @@
+INCLUDE std.aha
+
+FUNCTION main
+    ASSIGN setting_dps 000
+    ASSIGN setting_caching_out 0
+    VAR d[32] = 00000000000000000000000001000101 //69 (2 * maximální počet papežů součastně ve funkci * gravitační konstanta + cca π)
+    VAR e[32] = 00000000000000000000000110100100 //420 (slovenská telefonní předvolba - 1)
+    VAR result[64] //empty result var
+    USE result IS multiply32bit(d,e) // result = d*e || result = 420 * 69
+    PRINTLN result DECIMAL
+    USE result IS add32bit(result,e) //result = result + e
+    PRINTLN result DECIMAL
+    PRINTLN result
+END

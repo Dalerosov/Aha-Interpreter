@@ -1,0 +1,8 @@
+SECSTART STD
+
+    FUNCTION setup
+        INCLUDE basicBinMath.aha
+
+    END
+
+SECEND STD

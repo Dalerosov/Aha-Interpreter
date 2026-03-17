@@ -1,0 +1,454 @@
+SECSTART BBM
+
+    FUNCTION setup
+        INCLUDE sbo.aha
+    END
+
+
+    FUNCTION prefix_with_zero(input)
+        VAR index[8] = 00111111
+        VAR output[64]
+        USE index IS SBO:prefix_with_zero_step(input,index,output)
+    END index
+
+    FUNCTION prefix_with_zero_step(input,index,output)
+        VAR index_is_zero[1]
+        VAR didnt_find_number[1]
+        
+        VAR zero[1] = 0
+        VAR one[64] = 00000001
+        USE index_is_zero IS SBO:is_zero(index)
+        USE didnt_find_number IS SBO:is_overflow(input,index)
+        SKIP 8 IF index_is_zero 0 // JUMP IF INDEX IS ZERO
+        SKIP 3 NOT didnt_find_number 0 // JUMP IF FOUND NUMBER
+        
+        SET output index zero 0
+        SKIP 1 NOT zero 0
+        SET output index input index
+        USE index IS subtract8bit(index,one)
+        USE output IS BBM:prefix_with_zero_step(input,index,output)
+        SET output index input index
+
+    END output
+
+    FUNCTION add8bit(a,b)
+        VAR carry[1] = 0
+
+        VAR result[8]
+        VAR tempRes[2]
+
+        //Adding bit 0
+        VAR a_var[1]
+        VAR b_var[1]
+        SET a_var 0 a 0
+        SET b_var 0 b 0
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 0 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 1
+        SET a_var 0 a 1
+        SET b_var 0 b 1
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 1 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 2
+        SET a_var 0 a 2
+        SET b_var 0 b 2
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 2 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 3
+        SET a_var 0 a 3
+        SET b_var 0 b 3
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 3 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 4
+        SET a_var 0 a 4
+        SET b_var 0 b 4
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 4 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 5
+        SET a_var 0 a 5
+        SET b_var 0 b 5
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 5 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 6
+
+        SET a_var 0 a 6
+        SET b_var 0 b 6
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 6 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 7
+        SET a_var 0 a 7
+        SET b_var 0 b 7
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 7 tempRes 1
+    END result
+
+
+
+    FUNCTION add8bitCarry(a,b,carryIn)
+        VAR carry[1]
+        SET carry 0 carryIn 0
+
+        VAR result[9]
+        VAR tempRes[2]
+
+        // Adding bit 0
+        VAR a_var[1]
+        VAR b_var[1]
+        SET a_var 0 a 0
+        SET b_var 0 b 0
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 0 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 1
+        SET a_var 0 a 1
+        SET b_var 0 b 1
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 1 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 2
+        SET a_var 0 a 2
+        SET b_var 0 b 2
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 2 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 3
+        SET a_var 0 a 3
+        SET b_var 0 b 3
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 3 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 4
+        SET a_var 0 a 4
+        SET b_var 0 b 4
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 4 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 5
+        SET a_var 0 a 5
+        SET b_var 0 b 5
+        USE tempRes IS add1bit(a_var,b_var,carry)
+        SET result 5 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 6
+
+        SET a_var 0 a 6
+        SET b_var 0 b 6
+        USE tempRes IS add1bit(a_var,b_var,carry)
+        SET result 6 tempRes 1
+        SET carry 0 tempRes 0
+
+        // Adding bit 7 + carry
+        SET a_var 0 a 7
+        SET b_var 0 b 7
+        USE tempRes IS SBO:add1bit(a_var,b_var,carry)
+        SET result 7 tempRes 1
+        SET carry 0 tempRes 0
+
+        SET result 8 carry 0
+    END result
+
+
+
+    FUNCTION add16bitCarry(a,b,carryIn)
+        VAR result[17]
+        VAR carry[1]
+        SET carry 0 carryIn 0
+
+        VAR tempRes[9]
+
+        // Adding bit 0 - 7
+        VAR a_var[8]
+        VAR b_var[8]
+        SET a_var 0 a 0 8
+        SET b_var 0 b 0 8
+        USE tempRes IS BBM:add8bitCarry(a_var,b_var,carry)
+        SET result 0 tempRes 0 8
+        SET carry 0 tempRes 8
+
+        // Adding bit 8 - 15 + carry
+        SET a_var 0 a 8 8
+        SET b_var 0 b 8 8
+        USE tempRes IS BBM:add8bitCarry(a_var,b_var,carry)
+        SET result 8 tempRes 0 8
+        SET carry 0 tempRes 8
+        SET result 16 carry 0
+    END result
+
+    FUNCTION add16bit(a,b)
+        VAR result[16]
+        VAR carry[1] = 0
+
+        VAR tempRes[9]
+
+        // Adding bit 0 - 7
+        VAR a_var[8]
+        VAR b_var[8]
+        SET a_var 0 a 0 8
+        SET b_var 0 b 0 8
+        USE tempRes IS BBM:add8bitCarry(a_var,b_var,carry)
+        SET result 0 tempRes 0 8
+        SET carry 0 tempRes 8
+
+        // Adding bit 8 - 15
+        SET a_var 0 a 8 8
+        SET b_var 0 b 8 8
+        USE tempRes IS BBM:add8bitCarry(a_var,b_var,carry)
+        SET result 8 tempRes 0 8
+    END result
+
+
+    FUNCTION add32bit(a,b)
+        VAR result[32]
+        VAR carry[1] = 0
+        
+        VAR tempRes[17]
+        
+        // Adding bit 0 - 15
+        VAR a_var[16]
+        VAR b_var[16]
+        SET a_var 0 a 0 16
+        SET b_var 0 b 0 16
+        USE tempRes IS BBM:add16bitCarry(a_var,b_var,carry)
+        SET result 0 tempRes 0 16
+        SET carry 0 tempRes 16
+        
+        // Adding bit 16 - 31
+        SET a_var 0 a 16 16
+        SET b_var 0 b 16 16
+        USE tempRes IS BBM:add16bitCarry(a_var,b_var,carry)
+        SET result 16 tempRes 0 16
+    END result
+
+
+    FUNCTION add32bitCarry(a,b,carryIn)
+        VAR result[33]
+        VAR carry[1]
+        SET carry 0 carryIn 0
+
+        VAR tempRes[17]
+
+        // Adding bit 0 - 15
+        VAR a_var[16]
+        VAR b_var[16]
+        SET a_var 0 a 0 16
+        SET b_var 0 b 0 16
+        USE tempRes IS BBM:add16bitCarry(a_var,b_var,carry)
+        SET result 0 tempRes 0 16
+        SET carry 0 tempRes 16
+
+        // Adding bit 16 - 31 + carry
+        SET a_var 0 a 16 16
+        SET b_var 0 b 16 16
+        USE tempRes IS BBM:add16bitCarry(a_var,b_var,carry)
+        SET result 16 tempRes 0 16
+        SET carry 0 tempRes 16
+        SET result 32 carry 0
+    END result
+
+
+    FUNCTION add64bit(a,b)
+        VAR result[64]
+        VAR carry[1] = 0
+
+        VAR tempRes[33]
+
+        // Adding bit 0 - 31
+        VAR a_var[32]
+        VAR b_var[32]
+        SET a_var 0 a 0 32
+        SET b_var 0 b 0 32
+        USE tempRes IS BBM:add32bitCarry(a_var,b_var,carry)
+        SET result 0 tempRes 0 32
+        SET carry 0 tempRes 32
+
+        // Adding bit 32 - 63
+        SET a_var 0 a 32 32
+        SET b_var 0 b 32 32
+        USE tempRes IS BBM:add32bitCarry(a_var,b_var,carry)
+        SET result 32 tempRes 0 32
+    END result
+
+    FUNCTION add64bitCarry(a,b,carryIn)
+        VAR result[65]
+        VAR carry[1]
+        SET carry 0 carryIn 0
+
+        VAR tempRes[33]
+
+        // Adding bit 0 - 31
+        VAR a_var[32]
+        VAR b_var[32]
+        SET a_var 0 a 0 32
+        SET b_var 0 b 0 32
+        USE tempRes IS BBM:add32bitCarry(a_var,b_var,carry)
+        SET result 0 tempRes 0 32
+        SET carry 0 tempRes 32
+
+        // Adding bit 32 - 63 + carry
+        SET a_var 0 a 32 32
+        SET b_var 0 b 32 32
+        USE tempRes IS BBM:add32bitCarry(a_var,b_var,carry)
+        SET result 32 tempRes 0 32
+        SET carry 0 tempRes 32
+        SET result 64 carry 0
+    END result
+
+    FUNCTION subtract64bit(from,to)
+        VAR flipped_bits[64]
+        VAR one[64] = 0000000000000000000000000000000000000000000000000000000000000001
+        VAR to_copy[64]
+        USE to_copy IS SBO:copy_var(to)
+        USE flipped_bits IS SBO:invert_bits(to_copy)
+        USE flipped_bits IS BBM:add64bit(flipped_bits,one)
+        USE to IS BBM:add64bit(from,flipped_bits)
+
+    END to
+
+    FUNCTION subtract32bit(from,to)
+        VAR flipped_bits[32]
+        VAR one[32] = 00000000000000000000000000000001
+        VAR to_copy[32]
+        USE to_copy IS SBO:copy_var(to)
+        USE flipped_bits IS SBO:invert_bits(to_copy)
+        USE flipped_bits IS BBM:add32bit(flipped_bits,one)
+        USE to_copy IS BBM:add32bit(from,flipped_bits)
+
+    END to_copy
+
+    FUNCTION subtract16bit(from,to)
+        VAR flipped_bits[16]
+        VAR one[16] = 0000000000000001
+        VAR to_copy[32]
+        USE to_copy IS SBO:copy_var(to)
+        USE flipped_bits IS SBO:invert_bits(to_copy)
+        USE flipped_bits IS BBM:add16bit(flipped_bits,one)
+        USE to IS BBM:add16bit(from,flipped_bits)
+
+    END to
+
+    FUNCTION subtract8bit(from,to)
+        VAR flipped_bits[8]
+        VAR one[8] = 00000001
+        VAR to_copy[8]
+        USE to_copy IS SBO:copy_var(to)
+        USE flipped_bits IS SBO:invert_bits(to_copy)
+        USE flipped_bits IS BBM:add8bit(flipped_bits,one)
+        USE to IS BBM:add8bit(from,flipped_bits)
+    END to
+
+    FUNCTION multiply64bit(a,b)
+        VAR result[64] = 0000000000000000000000000000000000000000000000000000000000000000
+        VAR a1[64]
+        VAR b1[64]
+        USE a1 IS SBO:copy_var(a)
+        USE b1 IS SBO:copy_var(b)
+        VAR is_zero[1]
+
+        USE is_zero IS SBO:is_zero(a1)
+        SKIP 4 IF is_zero 0
+        USE is_zero IS SBO:is_zero(b1)
+        SKIP 2 IF is_zero 0
+
+        USE result IS BBM:multiply64bit_step(a1,b1)
+    END result
+
+
+    FUNCTION multiply64bit_step(a,b)
+        VAR result[64]
+        VAR partial_product[64]
+        VAR one[64] = 0000000000000000000000000000000000000000000000000000000000000001
+        VAR is_zero[1]
+        USE result IS SBO:copy_var(a)
+        VAR b_minus_one[64]
+        USE b_minus_one IS BBM:subtract64bit(b,one)
+        USE is_zero IS SBO:is_zero(b_minus_one)
+        SKIP 3 IF is_zero 0
+        USE partial_product IS BBM:multiply64bit_step(a,b_minus_one)
+        USE result IS add64bit(result,partial_product)
+        
+    END result
+
+    FUNCTION multiply32bit(a,b)
+        VAR result[32] = 00000000000000000000000000000000
+        VAR a1[32]
+        VAR b1[32]
+        USE a1 IS SBO:copy_var(a)
+        USE b1 IS SBO:copy_var(b)
+        VAR is_zero[1]
+        USE is_zero IS SBO:is_zero(a1)
+        SKIP 4 IF is_zero 0
+        USE is_zero IS SBO:is_zero(b1)
+        SKIP 2 IF is_zero 0
+
+        USE result IS BBM:multiply32bit_step(a1,b1)
+    END result
+
+
+    FUNCTION multiply32bit_step(a,b)
+        VAR result[32]
+        VAR partial_product[32]
+        VAR one[32] = 00000000000000000000000000000001
+        VAR is_zero[1]
+        USE result IS SBO:copy_var(a)
+        VAR b_minus_one[32]
+        USE b_minus_one IS BBM:subtract32bit(b,one)
+        USE is_zero IS SBO:is_zero(b_minus_one)
+        SKIP 3 IF is_zero 0
+        USE partial_product IS BBM:multiply32bit_step(a,b_minus_one)
+        USE result IS add32bit(result,partial_product)
+        
+    END result
+
+    FUNCTION multiply8bit(a,b)
+        VAR result[8] = 00000000
+        VAR a1[8]
+        VAR b1[8]
+        USE a1 IS SBO:copy_var(a)
+        USE b1 IS SBO:copy_var(b)
+        VAR is_zero[1]
+
+        USE is_zero IS SBO:is_zero(a1)
+        SKIP 4 IF is_zero 0
+        USE is_zero IS SBO:is_zero(b1)
+        SKIP 2 IF is_zero 0
+
+        USE result IS BBM:multiply8bit_step(a1,b1)
+    END result
+
+
+    FUNCTION multiply8bit_step(a,b)
+        VAR result[8]
+        VAR partial_product[8]
+        VAR one[8] = 00000001
+        VAR is_zero[1]
+        USE result IS SBO:copy_var(a)
+        VAR b_minus_one[8]
+        USE b_minus_one IS BBM:subtract8bit(b,one)
+        USE is_zero IS SBO:is_zero(b_minus_one)
+        SKIP 3 IF is_zero 0
+        USE partial_product IS BBM:multiply8bit_step(a,b_minus_one)
+        USE result IS add8bit(result,partial_product)
+        
+    END result
+
+SECEND BBM
