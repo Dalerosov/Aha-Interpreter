@@ -1,6 +1,8 @@
 I wanted to try writing my own esoteric interpreted programming language
 
-It is very inefficient, but efficiency is not the point
+It is very inefficient, since at the start i only wanted to do like an adder, but it kind of snowballed on me, so the 1s and 0s are stored as chars, which is really bad but efficiency is not the point
+
+The program can use caching, but it is not done too well and will take up ram space, but it makes it faster
 
 there is no indentation or anything
 
@@ -12,7 +14,7 @@ FUNCTION main
 //progarm
 END
 
-if you want other header files, just write INCLUDE nameoffile.aha preferably outside any function, but technically you can write it anywhere
+if you want other header files, just write INCLUDE nameoffile.aha preferably outside any function, but technically you can write it anywhere because the program performs linking recursively before execution; also double importing is prevented
 
 Any included file must contain function setup, which can be empty, but is used for when you want to add dependencies.
 All header files you add will automatically be added only once, even if they are included multiple times
@@ -31,7 +33,8 @@ VAR *name*\[*size*\]
 and
 GLOBAL *name* \[*size*\]
 
-VAR is only accesible in current function,
+VAR is only accesible in current scope (function),
+all variables are freed when they run out of scope
 GLOBAL is well Global
 
 you can use ASSIGN to set value of any existing var
