@@ -140,7 +140,3 @@ Output: `0`
 - **Caching** — result caching is opt-in and trades memory for speed on repeated calls with identical arguments. It can be enabled by setting `setting_caching_out`.
 
 ---
-
-## What I learned
-
-Building this pushed me to think carefully about things I'd otherwise take for granted: how a call stack works at the data level, how to resolve includes without cycles, how scoping interacts with variable lookup, and how to compose complex behaviour from a minimal instruction set. It also made me appreciate how much work goes into even a "simple" language runtime.
