@@ -138,5 +138,3 @@ Output: `0`
 - **Bit-level storage** — values are stored as `char[]` of `'0'` and `'1'`. This is intentional for simplicity; the focus was on interpreter design, not runtime efficiency.
 - **Reference semantics for parameters** — function arguments currently refer to the caller's variable directly. This is a known limitation; copying before passing is the current workaround.
 - **Caching** — result caching is opt-in and trades memory for speed on repeated calls with identical arguments. It can be enabled by setting `setting_caching_out`.
-
----
