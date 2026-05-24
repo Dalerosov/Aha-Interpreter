@@ -14,12 +14,14 @@ FUNCTION main
 //progarm
 END
 
+and as of now these have to be in "C:/aha/prog.aha"
+
 if you want other header files, just write INCLUDE nameoffile.aha preferably outside any function, but technically you can write it anywhere because the program performs linking recursively before execution; also double importing is prevented
 
 Any included file must contain function setup, which can be empty, but is used for when you want to add dependencies.
 All header files you add will automatically be added only once, even if they are included multiple times
 
-you can use VOMIT CODE in any function to get all the code that can be executed, this needs to be executed, so preferably into the main function
+you can use VOMIT CODE in any function to get all the code that can be executed to be printed out, this needs to be executed, so preferably into the main function
 
 each header file should start with SECSTART *name* and SECEND *name*, which signals start and end of a sector, this is, so there is no colision of function names between different headers
 
