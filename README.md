@@ -28,7 +28,7 @@ All variables are bit arrays. There is no integer, string, or float type.
 
 ```
 VAR name[size]           // local to current function
-VAR name[size] = 1010    // local, initialized (binary value)
+VAR name[size] = 1010    // local, initialized (binary value) !has to contain the leading zeroes as well!
 GLOBAL name[size]        // global scope
 ```
 
