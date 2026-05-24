@@ -1,82 +1,146 @@
-I wanted to try writing my own esoteric interpreted programming language
+# Aha — A Bit-Level Esoteric Interpreter
 
-It is very inefficient, since at the start i only wanted to do like an adder, but it kind of snowballed on me, so the 1s and 0s are stored as chars, which is really bad but efficiency is not the point
+Aha is a small interpreted language I built from scratch in C#. It started as an experiment in writing a simple binary adder, then grew into a full interpreter with functions, scoped variables, an include/linking system, and optional result caching.
 
-The program can use caching, but it is not done too well and will take up ram space, but it makes it faster
+The language is intentionally low-level: the only primitive type is a bit array, and the only native operations are `AND` and `NOT`. Everything else — arithmetic, comparisons, control flow — has to be composed from those primitives.
 
-there is no indentation or anything
+---
 
-the program is only really split into functions, which start with keyword FUNCTION and end with keyword END
+## How it works
 
-each program must contain main function:
+The interpreter runs in a few distinct phases:
 
+**1. Linking** — before execution begins, the source file is scanned for `INCLUDE` directives. Included files are appended to the in-memory code list and their `setup` functions are called. Double-inclusion is prevented by tracking sector names; if a sector is already registered, the file is skipped entirely.
+
+**2. Sector resolution** — each file (and the main program) defines a named sector via `SECSTART`/`SECEND`. Sectors serve as namespaces to prevent function name collisions across included files.
+
+**3. Execution** — the interpreter evaluates lines sequentially. Control flow is handled via `SKIP`/`NSKIP` (conditional line skipping) rather than labels or jumps. Function calls push a frame onto a `List<Function>` stack; `END` pops it and restores the previous line counter.
+
+**4. Caching** — functions are optionally memoized. A cache key is built from the function name and the binary values of its arguments, so the same logical call with the same inputs skips re-execution.
+
+---
+
+## Language overview
+
+### Variables
+
+All variables are bit arrays. There is no integer, string, or float type.
+
+```
+VAR name[size]           // local to current function
+VAR name[size] = 1010    // local, initialized (binary value)
+GLOBAL name[size]        // global scope
+```
+
+Variables are freed when their enclosing function returns.
+
+### Operations
+
+```
+OPERATION result IS a AND b
+OPERATION result IS NOT a
+```
+
+Operations work on single bits (index 0 of the variable). To work with multi-bit values, copy bits explicitly using `SET`:
+
+```
+SET target target_start source source_start length
+```
+
+### Control flow
+
+```
+SKIP 3 IF flag 0          // skip 3 lines if bit 0 of flag is 1
+NSKIP 2 NOT flag 0        // skip 2 lines if bit 0 of flag is NOT 0
+```
+
+Multiple `IF`/`NOT` clauses are ANDed together.
+
+### Functions
+
+```
 FUNCTION main
-//progarm
+  // code
 END
 
-and as of now these have to be in "C:/aha/prog.aha"
+FUNCTION add(a,b)
+  // code
+END a_plus_b
+```
 
-if you want other header files, just write INCLUDE nameoffile.aha preferably outside any function, but technically you can write it anywhere because the program performs linking recursively before execution; also double importing is prevented
+Call with return value:
+```
+USE result IS add(x,y)
+```
 
-Any included file must contain function setup, which can be empty, but is used for when you want to add dependencies.
-All header files you add will automatically be added only once, even if they are included multiple times
+Call without return value:
+```
+INVOKE add(x,y)
+```
 
-you can use VOMIT CODE in any function to get all the code that can be executed to be printed out, this needs to be executed, so preferably into the main function
+Parameters are currently passed by reference. A copy utility function is the recommended workaround for value semantics.
 
-each header file should start with SECSTART *name* and SECEND *name*, which signals start and end of a sector, this is, so there is no colision of function names between different headers
+### Output
 
-if you want to see what sectors you have, use VOMIT SECTORS
+```
+PRINT varname            // print raw binary
+PRINT varname DECIMAL    // print as signed decimal
+PRINT varname UDECIMAL   // print as unsigned decimal
+PRINT varname TRIM       // strip leading zeros
+```
 
-all variables are stored as bits so there is only really one type
+### Includes
 
-there are two kinds of variables, which are
+```
+INCLUDE math.aha
+```
 
-VAR *name*\[*size*\]
-and
-GLOBAL *name* \[*size*\]
+Included files must define a `setup` function (can be empty) and wrap their contents in `SECSTART name` / `SECEND name`. Recursive and duplicate includes are handled automatically.
 
-VAR is only accesible in current scope (function),
-all variables are freed when they run out of scope
-GLOBAL is well Global
+---
 
-you can use ASSIGN to set value of any existing var
+## Debugging
 
-ASSIGN *name* *value*
+```
+VOMIT CODE       // print all linked code with line numbers
+VOMIT SECTORS    // print sector names and their line ranges
+VOMIT STEPS      // print current execution step count
+```
 
-when creating a variable, you can add = *binary value* to assign a value
+To enable step-by-step tracing, set `setting_dps` early in `main`:
+```
+ASSIGN setting_dps 1    // print line number on each step
+```
+Values `01`, `10`, `11`, `001`, `101` give progressively more detail (sector name, token, full line).
 
-this language only supports two basic operations AND and NOT
+---
 
-OPERATION *result var* IS *var a* AND *var b*
-OPERATION *result var* IS NOT *var a*
+## Example
 
-these two operations take input and output of size 1 bit
+A program that computes NOT of a bit and prints the result:
 
-if you want to use anything bigger, you need to use SET keyword
+```
+FUNCTION main
+  VAR a[1] = 1
+  VAR b[1]
+  OPERATION b IS NOT a
+  PRINT b UDECIMAL
+END
+```
 
-SET *target_name* *starting_index||var_with_value_of_starting_index* IS *set_from where_name* *starting_index||var_with_value_of_starting_index* *length*
+Output: `0`
 
-to call functions you can use USE if you want a return value or INVOKE if not
+---
 
-INVOKE *function_name*\(*parameters,...*\)
+## Known limitations and design notes
 
-USE *return_where IS *function_name*\(*parameters,...*\)
+- **Hardcoded file path** — the interpreter currently reads from `C:/aha/prog.aha`. Making this a CLI argument is a planned improvement.
+- **Bit-level storage** — values are stored as `char[]` of `'0'` and `'1'`. This is intentional for simplicity; the focus was on interpreter design, not runtime efficiency.
+- **Reference semantics for parameters** — function arguments currently refer to the caller's variable directly. This is a known limitation; copying before passing is the current workaround.
+- **Caching** — result caching is opt-in and trades memory for speed on repeated calls with identical arguments. It can be enabled by setting `setting_caching_out`.
 
-!!!parameters must be stored in variable, not raw numbers
-!!!dont make any spaces between parameters
-!!!parameters are for some reason passed by reference and i didnt get to fixing it yet, i recommend writing a fucntion to coppy values
+---
 
-to skip lines you can use 
+## What I learned
 
-SKIP or NSIP
-
-SKIP *literal number of lines* IF*|*NOT *var_name* *index_of_bit_compared||var_containing_index*
-IF checks for 1, NOT for 0
-NSKIP negates this, you can add multiple IF... statements after SKIP or NSKIP to make a logical AND
-if the bit you are checking for is out of bounds, both IF and NOT return false
-
-you can print with PRINT
-if you want to convert to decimal PRINT DECIMAL
-or usnigned decimal PRINT UDECIMAL
-
-you can watch the program going through lines by calling ASSIGN setting_dps 100 after the start of main function
+Building this pushed me to think carefully about things I'd otherwise take for granted: how a call stack works at the data level, how to resolve includes without cycles, how scoping interacts with variable lookup, and how to compose complex behaviour from a minimal instruction set. It also made me appreciate how much work goes into even a "simple" language runtime.
