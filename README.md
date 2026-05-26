@@ -1,6 +1,6 @@
 # Aha — A Bit-Level Esoteric Interpreter
 
-Aha is a small interpreted language I built from scratch in C#. It started as an experiment in writing a simple binary adder, then grew into a full interpreter with functions, scoped variables, an include/linking system, and optional result caching.
+Aha is a small interpreted language I built from scratch in C# in mid 2024. It started as an experiment in writing a simple binary adder, then grew into a full interpreter with functions, scoped variables, an include/linking system, and optional result caching.
 
 The language is intentionally low-level: the only primitive type is a bit array, and the only native operations are `AND` and `NOT`. Everything else — arithmetic, comparisons, control flow — has to be composed from those primitives.
 
